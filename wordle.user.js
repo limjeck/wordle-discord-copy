@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
@@ -244,7 +244,7 @@
         modifyClipboard();
         function addBtn(){
             if(document.querySelector(".mybtn")) return;
-            let copybtn = document.querySelector(".Game > p button");
+            let copybtn = document.querySelector("div[role='alert'] button");
             if(copybtn === null) return;
             let btn = document.createElement("button");
             btn.innerHTML = "share discord";
