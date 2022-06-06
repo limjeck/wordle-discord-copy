@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
@@ -253,7 +253,7 @@
             btn.addEventListener("click", (event) => {
                 copybtn.click();
                 let ans = navigator.clipboard.lastCall[0].split("\n");
-                let chars = Array.from(document.querySelectorAll(".Row-locked-in .Row-letter")).map(x => x.innerText);
+                let chars = Array.from(document.querySelectorAll(".Row-locked-in .Row-letter:not(.Row-separator)")).map(x => x.innerText);
                 let num_guesses = chars.length / 5;
                 let guesses = [];
                 for(let i=0; i<num_guesses; i++){
