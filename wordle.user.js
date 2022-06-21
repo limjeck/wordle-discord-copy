@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
@@ -11,6 +11,8 @@
 // @match        https://www.symble.app/*
 // @match        https://xordle.xyz/*
 // @match        https://fibble.xyz/*
+// @match        https://vocaloid-heardle.glitch.me/*
+// @match        https://the-osu-heardle.glitch.me/*
 // @grant        none
 // ==/UserScript==
 
@@ -19,7 +21,7 @@
 
     function modifyClipboard(){
         (function(proxied) {
-            let _oldWriteText = navigator.clipboard.writeText;
+            let _oldWriteText = proxied;
             navigator.clipboard.writeText = function() {
                 navigator.clipboard.lastCall = arguments;
                 return _oldWriteText.apply(this, arguments);
@@ -300,6 +302,18 @@
         obs.observe(document.body, {childList: true, subtree: true});
     }
 
+    function doVocaloid(){
+        (function(proxied) {
+            let _oldWriteText = proxied;
+            navigator.clipboard.writeText = function() {
+                arguments[0] += window.location.href;
+                return _oldWriteText.apply(this, arguments);
+            };
+        })(navigator.clipboard.writeText);
+    }
+
+    let doOsu = doVocaloid;
+
     switch(window.location.host){
         // Wordle
         case "www.nytimes.com":
@@ -334,6 +348,16 @@
         // Fibble
         case "fibble.xyz":
             doFibble();
+            break;
+
+        // Vocaloid heardle
+        case "vocaloid-heardle.glitch.me":
+            doVocaloid();
+            break;
+
+        // osu heardle
+        case "the-osu-heardle.glitch.me":
+            doOsu();
             break;
     }
 })();
