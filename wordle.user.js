@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
@@ -14,6 +14,7 @@
 // @match        https://vocaloid-heardle.glitch.me/*
 // @match        https://the-osu-heardle.glitch.me/*
 // @grant        none
+// @run-at       document-start
 // ==/UserScript==
 
 (function() {
@@ -30,50 +31,80 @@
     }
 
     function doWordle(){
-        let gameApp = document.getElementsByTagName("game-app")[0];
-        let obs = new MutationObserver((mutationsList, obs) => {
-            for(let mutation of mutationsList){
-                for(let node of mutation.addedNodes){
-                    if(node.tagName === "GAME-STATS"){
-                        let disc = document.createElement("button");
-                        disc.innerText = "SHARE DISCORD";
-                        disc.addEventListener("click", (event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            let state = {
-                                evaluations: gameApp.evaluations,
-                                dayOffset: gameApp.dayOffset,
-                                rowIndex: gameApp.rowIndex,
-                                isHardMode: gameApp.hardMode,
-                                isWin: gameApp.gameStatus === "WIN",
-                                boardState: gameApp.boardState
-                            };
-                            let ans = `Wordle ${state.dayOffset} ${state.isWin ? state.rowIndex : "X"}/6${state.isHardMode ? "*" : ""}\n\n`;
-                            let ansgrid = [];
-                            for(let i=0; i<state.rowIndex; i++){
-                                let row = state.evaluations[i].map((x) => {
-                                    if(x === "correct"){
-                                        return "🟩";
-                                    }else if(x === "present"){
-                                        return "🟨";
-                                    }else{
-                                        return "⬛";
-                                    }
-                                }).join("");
-                                row += ` ||\`${state.boardState[i].toUpperCase()}\`||`;
-                                ansgrid.push(row);
-                            }
-                            ans += ansgrid.join("\n");
-                            navigator.clipboard.writeText(ans).then(() => {
-                                gameApp.addToast("Copied results to clipboard", 2e3, !0);
+        if(document.getElementsByTagName("game-app").length){
+            let gameApp = document.getElementsByTagName("game-app")[0];
+            let obs = new MutationObserver((mutationsList, obs) => {
+                for(let mutation of mutationsList){
+                    for(let node of mutation.addedNodes){
+                        if(node.tagName === "GAME-STATS"){
+                            let disc = document.createElement("button");
+                            disc.innerText = "SHARE DISCORD";
+                            disc.addEventListener("click", (event) => {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                let state = {
+                                    evaluations: gameApp.evaluations,
+                                    dayOffset: gameApp.dayOffset,
+                                    rowIndex: gameApp.rowIndex,
+                                    isHardMode: gameApp.hardMode,
+                                    isWin: gameApp.gameStatus === "WIN",
+                                    boardState: gameApp.boardState
+                                };
+                                let ans = `Wordle ${state.dayOffset} ${state.isWin ? state.rowIndex : "X"}/6${state.isHardMode ? "*" : ""}\n\n`;
+                                let ansgrid = [];
+                                for(let i=0; i<state.rowIndex; i++){
+                                    let row = state.evaluations[i].map((x) => {
+                                        if(x === "correct"){
+                                            return "🟩";
+                                        }else if(x === "present"){
+                                            return "🟨";
+                                        }else{
+                                            return "⬛";
+                                        }
+                                    }).join("");
+                                    row += ` ||\`${state.boardState[i].toUpperCase()}\`||`;
+                                    ansgrid.push(row);
+                                }
+                                ans += ansgrid.join("\n");
+                                navigator.clipboard.writeText(ans).then(() => {
+                                    gameApp.addToast("Copied results to clipboard", 2e3, !0);
+                                });
                             });
-                        });
-                        gameApp.shadowRoot.querySelector("game-stats").shadowRoot.getElementById("share-button").parentNode.appendChild(disc);
+                            gameApp.shadowRoot.querySelector("game-stats").shadowRoot.getElementById("share-button").parentNode.appendChild(disc);
+                        }
                     }
                 }
+            });
+            obs.observe(gameApp.shadowRoot.querySelector("game-modal"), {childList: true});
+        }else{ // new wordle page
+            modifyClipboard();
+            window.onload = function(){
+                let obs = new MutationObserver((mutationsList, obs) => {
+                    if(document.querySelector(".mybtn")) return;
+                    let copybtn = document.getElementById("share-button");
+                    if(copybtn === null) return;
+                    let disc = document.createElement("button");
+                    disc.className = "mybtn";
+                    disc.innerText = "SHARE DISCORD";
+                    copybtn.after(disc);
+                    disc.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        copybtn.click();
+                        let ans = navigator.clipboard.lastCall[0].split("\n");
+                        let chars = Array.from(document.querySelectorAll("div[data-testid='tile']")).map(x => x.innerText);
+                        let num_guesses = chars.length / 5;
+                        let guesses = [];
+                        for(let i=0; i<num_guesses && i+2<ans.length; i++){
+                            let guess = chars.slice(5*i, 5*(i+1)).join("");
+                            ans[i+2] += ` ||\`${guess}\`||`;
+                        }
+                        navigator.clipboard.writeText(ans.join("\n"));
+                    });
+                });
+                obs.observe(document.getElementById("wordle-app-game"), {childList: true});
             }
-        });
-        obs.observe(gameApp.shadowRoot.querySelector("game-modal"), {childList: true});
+        }
     }
 
     function doWorldle(){
