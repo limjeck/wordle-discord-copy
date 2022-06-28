@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
@@ -29,6 +29,8 @@
             };
         })(navigator.clipboard.writeText);
     }
+
+    modifyClipboard();
 
     function doWordle(){
         if(document.getElementsByTagName("game-app").length){
@@ -77,33 +79,31 @@
             });
             obs.observe(gameApp.shadowRoot.querySelector("game-modal"), {childList: true});
         }else{ // new wordle page
-            modifyClipboard();
-            window.onload = function(){
-                let obs = new MutationObserver((mutationsList, obs) => {
-                    if(document.querySelector(".mybtn")) return;
-                    let copybtn = document.getElementById("share-button");
-                    if(copybtn === null) return;
-                    let disc = document.createElement("button");
-                    disc.className = "mybtn";
-                    disc.innerText = "SHARE DISCORD";
-                    copybtn.after(disc);
-                    disc.addEventListener("click", (e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        copybtn.click();
-                        let ans = navigator.clipboard.lastCall[0].split("\n");
-                        let chars = Array.from(document.querySelectorAll("div[data-testid='tile']")).map(x => x.innerText);
-                        let num_guesses = chars.length / 5;
-                        let guesses = [];
-                        for(let i=0; i<num_guesses && i+2<ans.length; i++){
-                            let guess = chars.slice(5*i, 5*(i+1)).join("");
-                            ans[i+2] += ` ||\`${guess}\`||`;
-                        }
-                        navigator.clipboard.writeText(ans.join("\n"));
-                    });
+            //modifyClipboard();
+            let obs = new MutationObserver((mutationsList, obs) => {
+                if(document.querySelector(".mybtn")) return;
+                let copybtn = document.getElementById("share-button");
+                if(copybtn === null) return;
+                let disc = document.createElement("button");
+                disc.className = "mybtn";
+                disc.innerText = "SHARE DISCORD";
+                copybtn.after(disc);
+                disc.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    copybtn.click();
+                    let ans = navigator.clipboard.lastCall[0].split("\n");
+                    let chars = Array.from(document.querySelectorAll("div[data-testid='tile']")).map(x => x.innerText);
+                    let num_guesses = chars.length / 5;
+                    let guesses = [];
+                    for(let i=0; i<num_guesses && i+2<ans.length; i++){
+                        let guess = chars.slice(5*i, 5*(i+1)).join("");
+                        ans[i+2] += ` ||\`${guess}\`||`;
+                    }
+                    navigator.clipboard.writeText(ans.join("\n"));
                 });
-                obs.observe(document.getElementById("wordle-app-game"), {childList: true});
-            }
+            });
+            obs.observe(document.body, {childList: true, subtree: true});
         }
     }
 
@@ -244,7 +244,7 @@
     }
 
     function doSymble(){
-        modifyClipboard();
+        //modifyClipboard();
         function addBtn(){
             if(document.querySelector(".mybtn")) return;
             let copybtn = document.querySelector("button.share-button");
@@ -274,7 +274,7 @@
     }
 
     function doXordle(){
-        modifyClipboard();
+        //modifyClipboard();
         function addBtn(){
             if(document.querySelector(".mybtn")) return;
             let copybtn = document.querySelector("div[role='alert'] button");
@@ -304,7 +304,7 @@
     }
 
     function doFibble(){
-        modifyClipboard();
+        //modifyClipboard();
         function addBtn(){
             if(document.querySelector(".mybtn")) return;
             let copybtn = document.querySelector(".Game > p button");
@@ -345,50 +345,52 @@
 
     let doOsu = doVocaloid;
 
-    switch(window.location.host){
-        // Wordle
-        case "www.nytimes.com":
-            doWordle();
-            break;
+    window.onload = function(){
+        switch(window.location.host){
+            // Wordle
+            case "www.nytimes.com":
+                doWordle();
+                break;
 
-        // Worldle
-        case "worldle.teuteuf.fr": 
-            doWorldle();
-            break;
+            // Worldle
+            case "worldle.teuteuf.fr": 
+                doWorldle();
+                break;
 
-        // Tradle
-        case "oec.world":
-            doTradle();
-            break;
+            // Tradle
+            case "oec.world":
+                doTradle();
+                break;
 
-        // Quordle
-        case "www.quordle.com":
-            doQuordle();
-            break;
+            // Quordle
+            case "www.quordle.com":
+                doQuordle();
+                break;
 
-        // Symble
-        case "www.symble.app":
-            doSymble();
-            break;
+            // Symble
+            case "www.symble.app":
+                doSymble();
+                break;
 
-        // Xordle
-        case "xordle.xyz":
-            doXordle();
-            break;
+            // Xordle
+            case "xordle.xyz":
+                doXordle();
+                break;
 
-        // Fibble
-        case "fibble.xyz":
-            doFibble();
-            break;
+            // Fibble
+            case "fibble.xyz":
+                doFibble();
+                break;
 
-        // Vocaloid heardle
-        case "vocaloid-heardle.glitch.me":
-            doVocaloid();
-            break;
+            // Vocaloid heardle
+            case "vocaloid-heardle.glitch.me":
+                doVocaloid();
+                break;
 
-        // osu heardle
-        case "the-osu-heardle.glitch.me":
-            doOsu();
-            break;
-    }
+            // osu heardle
+            case "the-osu-heardle.glitch.me":
+                doOsu();
+                break;
+        }
+    };
 })();
