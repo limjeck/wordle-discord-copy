@@ -1,18 +1,16 @@
 // ==UserScript==
 // @name         Wordle discord copy
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      0.11
 // @description  try to take over the wordle!
 // @author       oneplusone
 // @match        https://www.nytimes.com/games/wordle/index.html*
 // @match        https://worldle.teuteuf.fr/*
-// @match        https://oec.world/en/tradle/*
+// @match        https://games.oec.world/en/tradle/*
 // @match        https://www.quordle.com/*
 // @match        https://www.symble.app/*
-// @match        https://xordle.xyz/*
+// @match        https://xordle.org/*
 // @match        https://fibble.xyz/*
-// @match        https://vocaloid-heardle.glitch.me/*
-// @match        https://the-osu-heardle.glitch.me/*
 // @grant        none
 // @run-at       document-start
 // ==/UserScript==
@@ -21,13 +19,15 @@
     'use strict';
 
     function modifyClipboard(){
-        (function(proxied) {
-            let _oldWriteText = proxied;
-            navigator.clipboard.writeText = function() {
-                navigator.clipboard.lastCall = arguments;
-                return _oldWriteText.apply(this, arguments);
-            };
-        })(navigator.clipboard.writeText);
+        if(navigator.clipboard){
+            (function(proxied) {
+                let _oldWriteText = proxied;
+                navigator.clipboard.writeText = function() {
+                    navigator.clipboard.lastCall = arguments;
+                    return _oldWriteText.apply(this, arguments);
+                };
+            })(navigator.clipboard.writeText);
+        }
     }
 
     modifyClipboard();
@@ -82,8 +82,9 @@
             //modifyClipboard();
             let obs = new MutationObserver((mutationsList, obs) => {
                 if(document.querySelector(".mybtn")) return;
-                let copybtn = document.getElementById("share-button");
-                if(copybtn === null) return;
+                let copybtn = document.getElementsByClassName("Footer-module_shareButton__cHprS");
+                if(copybtn.length == 0) return;
+                copybtn = copybtn[0];
                 let disc = document.createElement("button");
                 disc.className = "mybtn";
                 disc.innerText = "SHARE DISCORD";
@@ -333,18 +334,6 @@
         obs.observe(document.body, {childList: true, subtree: true});
     }
 
-    function doVocaloid(){
-        (function(proxied) {
-            let _oldWriteText = proxied;
-            navigator.clipboard.writeText = function() {
-                arguments[0] += window.location.href;
-                return _oldWriteText.apply(this, arguments);
-            };
-        })(navigator.clipboard.writeText);
-    }
-
-    let doOsu = doVocaloid;
-
     window.onload = function(){
         switch(window.location.host){
             // Wordle
@@ -358,7 +347,7 @@
                 break;
 
             // Tradle
-            case "oec.world":
+            case "games.oec.world":
                 doTradle();
                 break;
 
@@ -373,23 +362,13 @@
                 break;
 
             // Xordle
-            case "xordle.xyz":
+            case "xordle.org":
                 doXordle();
                 break;
 
             // Fibble
             case "fibble.xyz":
                 doFibble();
-                break;
-
-            // Vocaloid heardle
-            case "vocaloid-heardle.glitch.me":
-                doVocaloid();
-                break;
-
-            // osu heardle
-            case "the-osu-heardle.glitch.me":
-                doOsu();
                 break;
         }
     };
